@@ -44,6 +44,7 @@ impl Service<Request<Incoming>> for VssService {
 
 		Box::pin(async move {
 			let prefix_stripped_path = path.strip_prefix(BASE_PATH_PREFIX).unwrap_or_default();
+			println!("VSS request: {} {}", req.method(), path);
 
 			match prefix_stripped_path {
 				"/getObject" => {

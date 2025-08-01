@@ -1,12 +1,13 @@
 [server_config]
-host = "127.0.0.1"
-port = 8080
+host = "127.0.0.1"     # Optional in TOML, can be overridden by env var `VSS_SERVER_HOST`
+port = 8080            # Optional in TOML, can be overridden by env var `VSS_SERVER_PORT`
+# jwt_public_key = """your_public_RSA_key_in_PEM_format""" # Optional in TOML, can be overridden by env var `VSS_JWT_PUBLIC_KEY`
 
 [postgresql_config]
 username = "postgres"  # Optional in TOML, can be overridden by env var `VSS_POSTGRESQL_USERNAME`
 password = "postgres"  # Optional in TOML, can be overridden by env var `VSS_POSTGRESQL_PASSWORD`
-host = "localhost"
-port = 5432
-database = "postgres"
+host = "localhost"     # Optional in TOML, can be overridden by env var `VSS_POSTGRESQL_HOST`
+port = 5432            # Optional in TOML, can be overridden by env var `VSS_POSTGRESQL_PORT`
+database = "postgres"  # Optional in TOML, can be overridden by env var `VSS_POSTGRESQL_DATABASE`
 # tls = { }                        # Uncomment to make TLS connections to the postgres database using your machine's PKI
 # tls = { ca_file = "ca.pem" }     # Uncomment to make TLS connections to the postgres database with an additional root certificate

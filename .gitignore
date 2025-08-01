@@ -13,4 +13,7 @@ app/bin/*
 app/.classpath
 app/.project
 app/.settings
-
+.cursor
+.claude
+*.local.*
+CLAUDE.md
