@@ -6,6 +6,8 @@ edition = "2021"
 [dependencies]
 api = { path = "../api" }
 impls = { path = "../impls" }
+auth-impls = { path = "../auth-impls" }
+jsonwebtoken = "9.0"
 
 hyper = { version = "1", default-features = false, features = ["server", "http1"] }
 http-body-util = { version = "0.1", default-features = false }

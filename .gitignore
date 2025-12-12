@@ -13,4 +13,4 @@ app/bin/*
 app/.classpath
 app/.project
 app/.settings
-
+*.local.*

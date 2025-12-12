@@ -18,9 +18,11 @@ use hyper::server::conn::http1;
 use hyper_util::rt::TokioIo;
 
 use crate::vss_service::VssService;
-use api::auth::{Authorizer, NoopAuthorizer};
+use api::auth::Authorizer;
 use api::kv_store::KvStore;
+use auth_impls::JWTAuthorizer;
 use impls::postgres_store::{Certificate, PostgresPlaintextBackend, PostgresTlsBackend};
+use jsonwebtoken::DecodingKey;
 use std::sync::Arc;
 
 pub(crate) mod util;
@@ -42,7 +44,7 @@ fn main() {
 	};
 
 	let addr: SocketAddr =
-		match format!("{}:{}", config.server_config.host, config.server_config.port).parse() {
+		match format!("{}:{}", config.server_config.get_host(), config.server_config.get_port()).parse() {
 			Ok(addr) => addr,
 			Err(e) => {
 				eprintln!("Invalid host/port configuration: {}", e);
@@ -66,14 +68,23 @@ fn main() {
 				std::process::exit(-1);
 			},
 		};
-		let authorizer: Arc<dyn Authorizer> = Arc::new(NoopAuthorizer {});
+		let public_key_pem = config.server_config.get_jwt_public_key();
+		let decoding_key = match DecodingKey::from_rsa_pem(public_key_pem.as_bytes()) {
+			Ok(key) => key,
+			Err(e) => {
+				eprintln!("Failed to parse RSA public key: {}", e);
+				std::process::exit(1);
+			}
+		};
+		let authorizer: Arc<dyn Authorizer> = Arc::new(JWTAuthorizer::new(decoding_key).await);
 		let postgresql_config =
 			config.postgresql_config.expect("PostgreSQLConfig must be defined in config file.");
 		let endpoint = postgresql_config.to_postgresql_endpoint();
-		let db_name = postgresql_config.database;
+		let db_name =
+			postgresql_config.database.as_ref().expect("Database name must be defined");
 		let store: Arc<dyn KvStore> = if let Some(tls_config) = postgresql_config.tls {
-			let additional_certificate = tls_config.ca_file.map(|file| {
-				let certificate = match std::fs::read(&file) {
+			let additional_certificate = tls_config.ca_file.as_deref().map(|file| {
+				let certificate = match std::fs::read(file) {
 					Ok(cert) => cert,
 					Err(e) => {
 						println!("Failed to read certificate file: {}", e);
@@ -89,7 +100,7 @@ fn main() {
 				}
 			});
 			let postgres_tls_backend =
-				match PostgresTlsBackend::new(&endpoint, &db_name, additional_certificate).await {
+				match PostgresTlsBackend::new(&endpoint, db_name, additional_certificate).await {
 					Ok(backend) => backend,
 					Err(e) => {
 						println!("Failed to start postgres tls backend: {}", e);
@@ -99,7 +110,7 @@ fn main() {
 			Arc::new(postgres_tls_backend)
 		} else {
 			let postgres_plaintext_backend =
-				match PostgresPlaintextBackend::new(&endpoint, &db_name).await {
+				match PostgresPlaintextBackend::new(&endpoint, db_name).await {
 					Ok(backend) => backend,
 					Err(e) => {
 						println!("Failed to start postgres plaintext backend: {}", e);
