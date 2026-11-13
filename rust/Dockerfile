@@ -1,5 +1,5 @@
 # Build stage
-FROM rust:1.82-slim-bullseye AS builder
+FROM rust:1.82-slim-bookworm AS builder
 
 # Install system dependencies for building
 RUN apt-get update && apt-get install -y \
@@ -29,11 +29,11 @@ COPY proto/ ./proto/
 RUN cargo build --release --bin vss-server
 
 # Runtime stage
-FROM debian:bullseye-slim
+FROM debian:bookworm-slim
 
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y \
-    libssl1.1 \
+    libssl3 \
     libpq5 \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
